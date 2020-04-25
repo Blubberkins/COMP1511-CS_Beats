@@ -418,25 +418,169 @@ int count_beats_left_in_track(Track track) {
 
 // Free the memory of a beat, and any memory it points to.
 void free_beat(Beat beat) {
-    // Note: there is no printf in this function, as the
-    // Stage 1 & 2 autotests call free_beat but don't check whether
-    // the memory has been freed (so this function should do nothing in
-    // Stage 1 & 2, rather than exit).
+    
+    if (beat != NULL) {
+
+        // if the beat contains notes
+        if (beat->notes != NULL) {
+
+            // creates a copy of the pointer to the first note of the beat
+            struct note *free_note = beat->notes;
+
+            while (free_note->next != NULL) {
+
+                // creates a copy of the pointer to the next note after the one
+                // currently being freed
+                struct note *next_note = free_note->next;
+
+                free(free_note);
+
+                // loops the free_note to the next note in the beat
+                free_note = next_note;
+
+            }
+
+            // free the final note in the beat
+            free(free_note);
+
+        }
+
+        free(beat);
+
+    }
+
     return;
 }
 
 // Free the memory of a track, and any memory it points to.
 void free_track(Track track) {
-    // Note: there is no printf in this function, as the
-    // Stage 1 & 2 autotests call free_track but don't check whether
-    // the memory has been freed (so this function should do nothing in
-    // Stage 1 & 2, rather than print an error).
+    
+    if (track != NULL) {
+
+        // if the track contains beats
+        if (track->head != NULL) {
+
+            // creates a copy of the pointer to the first beat of the track
+            struct beat *freed_beat = track->head;
+
+            while (freed_beat->next != NULL) {
+
+                // creates a copy of the pointer to the next beat after the one
+                // currently being freed
+                struct beat *next_beat = freed_beat->next;
+
+                // frees the memory allocated to the beat using a function
+                free_beat(freed_beat);
+
+                // loops the freed_beat to the next beat in the track
+                freed_beat = next_beat;
+
+            }
+
+            // free the final beat in the track
+            free_beat(freed_beat);
+
+        }
+
+        free(track);
+
+    }
+
     return;
 }
 
 // Remove the currently selected beat from a track.
 int remove_selected_beat(Track track) {
-    printf("remove_selected_beat not implemented yet.");
+    
+    // if the track contains beats and there is a currently selected beat
+    if (track->head != NULL && track->current != NULL) {
+
+        // creates a copy of the pointer to the currently selected beat
+        struct beat *remove_beat = track->current;
+
+        // if the currently selected beat is not the first beat in the track
+        if (track->current != track->head) {
+
+            // creates a copy of the pointer to the first beat in the track
+            struct beat *previous_beat = track->head;
+
+            // loops through the track until previous_beat points to the
+            // beat before the currently selected beat
+            while (previous_beat->next != remove_beat) {
+
+                previous_beat = previous_beat->next;
+
+            }
+
+            // if the currently selected beat is not the last beat in the track
+            if (remove_beat->next != NULL) {
+
+                // make the previous_beat's 'next' point to the currently
+                // selected beat's 'next'
+                previous_beat->next = remove_beat->next;
+
+                // make the currently selected beat the next beat after it
+                track->current = remove_beat->next;
+
+                // frees the memory allocated to the beat using a function
+                free_beat(remove_beat);
+
+                return TRACK_PLAYING;
+
+            // the currently selected beat is the last beat in the track
+            } else {
+
+                // make the previous_beat's 'next' point to NULL
+                previous_beat->next = NULL;
+
+                // make the currently selected beat 'NULL'
+                track->current = NULL;
+
+                // frees the memory allocated to the beat using a function
+                free_beat(remove_beat);
+
+                return TRACK_STOPPED;
+
+            }
+
+        // if the currently selected beat is the first beat in the track
+        } else {
+
+            // if the first beat is not the last beat in the track
+            if (remove_beat->next != NULL) {
+
+                // make the beat after the currently selected beat the first
+                // beat of the track
+                track->head = remove_beat->next;
+
+                // make the currently selected beat the next beat after it
+                track->current = remove_beat->next;
+
+                // frees the memory allocated to the beat using a function
+                free_beat(remove_beat);
+
+                return TRACK_PLAYING;
+
+            // the first beat is the last beat in the track
+            } else {
+
+                // make the first beat of the track 'NULL'
+                track->head = NULL;
+
+                // make the currently selected beat 'NULL'
+                track->current = NULL;
+
+                // frees the memory allocated to the beat using a function
+                free_beat(remove_beat);
+
+                return TRACK_STOPPED;
+
+            }
+
+        }
+
+    }
+
     return TRACK_STOPPED;
 }
 
