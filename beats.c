@@ -25,8 +25,16 @@
 // to store other information.
 
 struct track {
-    // TODO: You will have to add extra fields here in Stage 2.
+
+    // Pointer to the first beat in the track
     struct beat *head;
+
+    // Additions:
+
+    // Pointer to the currently playing beat
+    struct beat *current;
+    // Number keeping track of how many beats there are in a track
+    int num_beats;
 };
 
 // You don't have to use the provided struct beat, you are free to
@@ -241,35 +249,167 @@ int count_notes_in_octave(Beat beat, int octave) {
 
 // Return a malloced track with fields initialized.
 Track create_track(void) {
-    // Note: there is no fprintf in this function, as the
-    // Stage 1 autotests call create_track but expect it to return NULL
-    // (so this function should do nothing in Stage 1).
+    
+    Track new_track = malloc(sizeof (struct track));
+    assert(new_track != NULL);
 
-    return NULL;
+    new_track->head = NULL;
+    new_track->current = NULL;
+    new_track->num_beats = 0;
+
+    return new_track;
 }
 
 // Add a beat after the current beat in a track.
 void add_beat_to_track(Track track, Beat beat) {
-    printf("add_beat_to_track not implemented yet.\n");
+    
+    // if there are no beats in the track
+    if (track->head == NULL) {
+
+        // Set the first beat of the track to the added beat
+        track->head = beat;
+
+        // Add one to the total number of beats in the track
+        track->num_beats++;
+
+    // if there are beats in the track and there is no currently selected beat
+    } else if (track->current == NULL) {
+
+        // set the added beat's 'next' to the previous first note of the track
+        beat->next = track->head;
+
+        // set the added beat as the first note of the track
+        track->head = beat;
+
+        // Add one to the total number of beats in the track
+        track->num_beats++;
+
+    // if there is a currently selected beat and it is not the last beat
+    // in the track
+    } else if (track->current->next != NULL) {
+
+        // set the added beat's 'next' to the previous 'next' of the
+        // currently selected beat
+        beat->next = track->current->next;
+
+        // set the currently selected beat's 'next' to the added beat
+        track->current->next = beat;
+
+        // Add one to the total number of beats in the track
+        track->num_beats++;
+
+    // the currently selected beat is the last beat in the track
+    } else {
+
+        // set the currently selected beat's 'next' to the added beat
+        track->current->next = beat;
+
+        // Add one to the total number of beats in the track
+        track->num_beats++;
+
+    }
+
     return;
 }
 
 // Set a track's current beat to the next beat.
 int select_next_beat(Track track) {
-    printf("select_next_beat not implemented yet.\n");
-    return TRACK_STOPPED;
+
+    // if there are no beats in the track
+    if (track->head == NULL) {
+
+        return TRACK_STOPPED;
+
+    // if there are beats in the track and there is no currently selected beat
+    } else if (track->current == NULL) {
+
+        track->current = track->head;
+        return TRACK_PLAYING;
+
+    // if the currently selected beat is the last beat in the track
+    } else if (track->current->next == NULL) {
+
+        track->current = NULL;
+        return TRACK_STOPPED;
+
+    // if there is a currently selected beat
+    } else {
+
+        track->current = track->current->next;
+        return TRACK_PLAYING;
+
+    }
+
 }
 
 // Print the contents of a track.
 void print_track(Track track) {
-    printf("print_track not implemented yet.\n");
+    
+    // if there are beats in the track
+    if (track->head != NULL) {
+
+        int beat_num = 0;
+
+        // creates a copy of the pointer to the first beat of the track
+        struct beat *current_print_beat = track->head;
+
+        while (current_print_beat != NULL) {
+
+            if (current_print_beat == track->current) {
+
+                printf(">");
+
+            } else {
+
+                printf(" ");
+
+            }
+
+            beat_num++;
+            printf("[%d] ", beat_num);
+            print_beat(current_print_beat);
+            current_print_beat = current_print_beat->next;
+
+        }
+
+    }
+
     return;
 }
 
 // Count beats after the current beat in a track.
 int count_beats_left_in_track(Track track) {
-    printf("count_beats_left_in_track not implemented yet.\n");
-    return 0;
+
+    // if no beat is currently selected (the track is 'stopped')
+    if (track->current == NULL) {
+
+        return track->num_beats;
+
+    // a beat is currently selected
+    } else {
+
+        // set beats_left to the number of beats in the track
+        int beats_left = track->num_beats;
+
+        // creates a copy of the pointer to the first beat of the track
+        struct beat *current_beat = track->head;
+
+        // loops through the track until reaching the current beat
+        while (current_beat != track->current) {
+
+            // subtracts 1 from beats_left every time it loops to a
+            // non-current beat
+            beats_left--;
+            current_beat = current_beat->next;
+
+        }
+
+        // returns beats_left - 1 as when it exits the loop it does not count
+        // the last beat left
+        return beats_left - 1;
+
+    }
+
 }
 
 ////////////////////////////////////////////////////////////////////////
